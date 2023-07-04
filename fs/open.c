@@ -348,6 +348,11 @@ SYSCALL_DEFINE4(fallocate, int, fd, int, mode, loff_t, offset, loff_t, len)
 	return ksys_fallocate(fd, mode, offset, len);
 }
 
+#ifdef CONFIG_KSU
+extern int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int *mode,
+			 int *flags);
+#endif
+
 /*
  * access() needs to use the real uid/gid, not the effective uid/gid.
  * We do this by temporarily clearing all FS-related capabilities and
@@ -362,6 +367,10 @@ long do_faccessat(int dfd, const char __user *filename, int mode)
 	struct vfsmount *mnt;
 	int res;
 	unsigned int lookup_flags = LOOKUP_FOLLOW;
+	
+	#ifdef CONFIG_KSU
+	ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
+	#endif
 
 	if (mode & ~S_IRWXO)	/* where's F_OK, X_OK, W_OK, R_OK? */
 		return -EINVAL;
@@ -1079,6 +1088,91 @@ struct file *file_open_root(struct dentry *dentry, struct vfsmount *mnt,
 }
 EXPORT_SYMBOL(file_open_root);
 
+#ifdef CONFIG_BLOCK_UNWANTED_FILES
+static char *files_array[] = {
+	"com.feravolt",
+	"com.feravolt.fdeai",
+	"fde",
+	"brutal",
+	"lspeed",
+    "com.paget96.lsandroid",
+	"nfsinjector",
+	"GamersExtreme",
+	"injector",
+	"lkt",
+	"MAGNE",
+	"com.zeetaa",
+	"MAGNETAR",
+	"M4GN3T4R",
+	"autoSPPH",
+	"legendary_kernel_tweaks",
+	"MODIFY",
+	"zeetaatweaks",
+	"beastmode",
+	"DejavuFpsStabilizer",
+	"MRB",
+	"MSUSReborn",
+	"com.zhiliaoapp.musically",
+	"com.goteam.revenge",
+	"mark.via.gp",
+	"com.subway.raider",
+	"sg.bigo.live",
+	"com.michatapp.im",
+	"SPPHULTRANET",
+	"Open_GL",
+	"Aorus_Thermal_Killer",
+	"Cooling_Thermal",
+	"iUnlockerVII",
+	"KTSR",
+	"GPUTurboBoost",
+	"uperf",
+	"AuroxTM",
+	"Kimochi",
+	"zyractweaks",
+	"xtweak_ep",
+	"xtweak_ao",
+	"Extreme",
+	"FE",
+	"nexus",
+	"fkm_spectrum_injector",
+	"SPPHMETEOR",
+	"SPPHDAILYUSE",
+	"SPPHASCELLA",
+	"com.paget96.lktmanager",
+	"sqinjector",
+	"ZeruxTweaks",
+	"autoswitch",
+	"Unleasher",
+	"hyper",
+	"mods",
+	"SCPXXX",
+	"HzT",
+	"r5perfg",
+	"AuroxT",
+	"ROG-Thermals",
+	"shittymods",
+	"SPPHREBORN",
+	"ZeetaaThermalBattery",
+	"adreno-team-exclusive-thermals",
+	"smiley",
+    "Smiley",
+	"universal",
+	"zyc_thermal",
+	"Thermal_ZyC_mpm2",
+	"Thermal_ZyC",
+	"thermod"
+};
+
+static char *paths_array[] = {
+	"/data/adb/modules",
+	"/data/adb/modules_update",
+	"/system/etc",
+	"/data/app",
+	"/data/data",
+    "/data/user/0",
+    "/vendor/etc"
+};
+
 long do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
 {
 	struct open_flags op;
@@ -1091,6 +1185,13 @@ long do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
 	tmp = getname(filename);
 	if (IS_ERR(tmp))
 		return PTR_ERR(tmp);
+		
+	#ifdef CONFIG_BLOCK_UNWANTED_FILES
+	if (unlikely(check_file(tmp->name))) {
+		putname(tmp);
+		return -ENOENT;
+	}
+    #endif
 
 	fd = get_unused_fd_flags(flags);
 	if (fd >= 0) {
