@@ -48,7 +48,7 @@ FINAL_ZIP_ALIAS=Karenulchim-${DATE}.zip
 ##----------------------------------------------------------##
 # Specify compiler.
 
-COMPILER=gf
+COMPILER=azure
 
 ##----------------------------------------------------------##
 # Specify Linker

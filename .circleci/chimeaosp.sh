@@ -96,15 +96,16 @@ make -j$(nproc --all) O=out ARCH=arm64 \
     CROSS_COMPILE=$GCC_64_DIR/bin/aarch64-linux-android- \
     CROSS_COMPILE_ARM32=$GCC_32_DIR/bin/arm-linux-androideabi- \
     CLANG_TRIPLE=aarch64-linux-gnu- \
-    Image dtbo.img
+    Image
 
-if [ -f "out/arch/arm64/boot/Image" ] && [ -f "out/arch/arm64/boot/dtbo.img" ]; then
+#if [ -f "out/arch/arm64/boot/Image" ] && [ -f "out/arch/arm64/boot/dtbo.img" ]; then
+if [ -f "out/arch/arm64/boot/Image" ]; then
    echo -e "\nKernel compiled succesfully! Zipping up...\n"
    
    git clone --depth=1 https://github.com/missgoin/AnyKernel3.git
 
    cp $IMAGE AnyKernel3
-   cp $DTBO AnyKernel3
+   #cp $DTBO AnyKernel3
    #find $DTB -name "*.dtb" -exec cat {} + > AnyKernel3/dtb
 	
    # Zipping and Push Kernel
